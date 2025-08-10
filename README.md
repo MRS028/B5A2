@@ -1,112 +1,160 @@
-# README
-### ১) PostgreSQL কী?
-PostgreSQL হলো একটি ওপেন-সোর্স রিলেশনালডেটাবেস ম্যানেজমেন্ট সিস্টেম (RDBMS)। এটি ACID (Atomicity, Consistency, Isolation, Durability) মেনে চলে এবং জটিল কুয়েরি, ট্রানজেকশন এবং কাস্টম এক্সটেনশান সমর্থন করে। PostgreSQL-এ অনেক উন্নত ফিচার থাকে — যেমন: JSONB (নেস্টেড JSON ডেটা স্টোর করা), পরিমিতকরণ (indexes), ট্রান্সঅ্যাকশন, ভিউ (views), স্টোরড প্রসিডিউর, রোল-ভিত্তিক নিরাপত্তা, এবং রিপ্লিকেশন/হাই-অ্যাভেইলেবিলিটি কনফিগারেশন।
+**১) PostgreSQL কী?**
+PostgreSQL একটি ওপেন-সোর্স রিলেশনাল ডেটাবেস ম্যানেজমেন্ট সিস্টেম (RDBMS) যা ACID (Atomicity, Consistency, Isolation, Durability) নীতি অনুসরণ করে। এটি জটিল কুয়েরি, ট্রানজেকশন, মাল্টি-ভার্সন কনকারেন্সি কন্ট্রোল (MVCC) এবং কাস্টম এক্সটেনশন সমর্থন করে। PostgreSQL JSONB ফরম্যাটে JSON ডেটা সংরক্ষণ, ইনডেক্সিং, ভিউ, স্টোরড প্রসিডিউর, রোল-ভিত্তিক অ্যাক্সেস কন্ট্রোল এবং রিপ্লিকেশন সাপোর্ট দেয়।
+**কোথায় ব্যবহার হয়:** ব্যাংকিং, স্বাস্থ্যসেবা, ই-কমার্স, GIS, ডেটা অ্যানালিটিক্স ইত্যাদি যেখানে ডেটার নির্ভুলতা ও নিরাপত্তা জরুরি।
+**উদাহরণ:**
 
-**কখন ব্যবহার করবেন?**
-- যখন ডেটার ইন্টিগ্রিটি জরুরী (ব্যাংকিং, হেলথ কেয়ার) — কারণ এটি শক্তিশালী কনসিস্টেন্সি দেয়।
-- জটিল কুয়েরি বা বিশ্লেষণ করতে হবে।
-- JSON ও রিলেশনাল উভয় ধরণের ডেটা সংরক্ষণ করতে হবে (JSONB সুবিধা)।
-
-**উদাহরণ (postgresql চালু করে):**
 ```sql
-
-CREATE DATABASE conservation_db;
-
-CREATE TABLE animals (
+CREATE DATABASE mydb;
+CREATE TABLE students (
   id SERIAL PRIMARY KEY,
-  name VARCHAR(100) NOT NULL,
-  discovered DATE
+  name VARCHAR(100),
+  admitted DATE
 );
 ```
 
 ---
 
-### ২) PostgreSQL-এ database schema কেন প্রয়োজন?
-Schema হচ্ছে একটি লজিক্যাল নামস্পেস বা কনটেইনার যা টেবিল, ভিউ, ফাংশন, ইন্ডেক্স ইত্যাদি সংগঠিত করে। একেকটি schema ডাটাবেসের ভেতরে আলাদা কম্পার্টমেন্ট হিসেবে কাজ করে — যেমন প্রকল্পভিত্তিক বিভাজন, নিরাপত্তা (permission) বা একই নামের টেবিল বিভিন্ন প্রেক্ষাপটে রাখার জন্য কাজে লাগে।
+**২) PostgreSQL-এ database schema কেন প্রয়োজন?**
+Schema হলো একটি লজিক্যাল কন্টেইনার যা টেবিল, ভিউ, ফাংশন ইত্যাদি সংগঠিত করে রাখে। এটি ডেটাবেসে আলাদা namespace তৈরি করে, যাতে একই নামে টেবিল ভিন্ন স্কিমায় রাখা যায় এবং প্রজেক্ট বা ইউজার-ভিত্তিক আলাদা ডেটা ম্যানেজ করা সহজ হয়।
+**সুবিধা:**
 
-**উদাহরণ:** যদি আপনার ডাটাবেসে `public` স্কিমার পাশাপাশি একটি `research` স্কিমা থাকে, আপনি `research.animals` নামে টেবিল রাখতে পারেন এবং অনুমতিসমূহ আলাদা করে দিতে পারবেন।
+* বড় প্রজেক্টে ডেটা আলাদা ভাগে সংগঠিত রাখা।
+* আলাদা ইউজারের জন্য পারমিশন নিয়ন্ত্রণ।
+* নামের দ্বন্দ্ব এড়ানো।
+  **উদাহরণ:**
 
 ```sql
 CREATE SCHEMA research AUTHORIZATION db_user;
-CREATE TABLE research.species (
-  species_id SERIAL PRIMARY KEY,
-  common_name VARCHAR(100)
+CREATE TABLE research.animals (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100)
 );
 ```
 
-**প্রয়োগগত সুবিধা:**
-- সংগঠন ও মেইনটেইন করা সহজ হয় (বড় প্রজেক্টে মডিউলারিটি)。
-- পার্টিশনিং বা মাল্টি-টেন্যান্সি স্থাপনায় সাহায্য করে।
-- ACL/permission সহজে কনফিগার করা যায় schema-স্তরে।
-
 ---
 
-### ৩) Primary Key ও Foreign Key ব্যাখ্যা
-**Primary Key (PK):** প্রতিটি টেবিলের এমন একটি কলাম বা কলামসমষ্টি যেটা প্রতিটি সারির জন্য ইউনিক এবং NULL নয়। PK ডাটার ইউনিক আইডেন্টিফায়ার হিসেবে কাজ করে। এক টেবিলে একাধিক রো না থাকায় PK থাকা আবশ্যক (অধিকাংশ ক্ষেত্রে)।
+**৩) Primary Key ও Foreign Key ব্যাখ্যা**
 
-**Foreign Key (FK):** একটি টেবিলের কলাম যা অন্য টেবিলের Primary Key কে রেফার করে। এটি রিলেশনাল ইন্টিগ্রিটি নিশ্চিত করে — মানে, FK যেই ভ্যালু ধারণ করে, সেই ভ্যালুটি অবশ্যই রেফার করা টেবিলে থাকতে হবে (বা NULL হলে নির্দিষ্ট ক্ষেত্রে অনুমোদিত)।
+* **Primary Key (PK):** টেবিলের একটি বা একাধিক কলাম যা প্রতিটি সারির জন্য ইউনিক ও NULL নয়। এটি প্রতিটি রেকর্ডকে সুনির্দিষ্টভাবে চিহ্নিত করে।
+* **Foreign Key (FK):** একটি কলাম যা অন্য টেবিলের Primary Key কে রেফার করে। এটি রিলেশনাল ইন্টিগ্রিটি বজায় রাখে।
+  **উদাহরণ:**
 
-**উদাহরণ:** আমাদের `rangers` ও `sightings` টেবিলে:
 ```sql
-CREATE TABLE rangers (
-  ranger_id SERIAL PRIMARY KEY,
-  name VARCHAR(100) NOT NULL
+CREATE TABLE departments (
+  dept_id SERIAL PRIMARY KEY,
+  name VARCHAR(100)
 );
 
-CREATE TABLE sightings (
-  sighting_id SERIAL PRIMARY KEY,
-  ranger_id INTEGER NOT NULL REFERENCES rangers(ranger_id),
-  species_id INTEGER NOT NULL REFERENCES species(species_id)
+CREATE TABLE employees (
+  emp_id SERIAL PRIMARY KEY,
+  name VARCHAR(100),
+  dept_id INT REFERENCES departments(dept_id)
 );
 ```
-এখানে `ranger_id` হলো `rangers` টেবিলের PK এবং `sightings.ranger_id` হলো FK — এই সম্পর্ক নিশ্চিত করে যে কোনো সাইটিং শুধু তখনই রেকর্ড করা যাবে যখন সেই রেঞ্জার `rangers` টেবিলে আছে।
 
-**ON DELETE / ON UPDATE options:** FK তৈরির সময় আপনি আচরণ নির্ধারণ করতে পারেন — যেমন `ON DELETE CASCADE` (রেফার করা সারি মুছে গেলে রিলেটেড সারিগুলোও মুছে যাবে), অথবা `ON DELETE SET NULL` (রিলেটেড সিরিতে NULL করে দেবে) ইত্যাদি। এই বিকল্পগুলো ব্যবহার করে ডাটার কনসিস্টেন্সি কাস্টমাইজ করা যায়।
+এখানে `employees.dept_id` হলো Foreign Key যা `departments.dept_id` এর সাথে যুক্ত।
 
 ---
 
-### ৪) VARCHAR বনাম CHAR — পার্থক্য ও ব্যবহার
-**CHAR(n)**: fixed-length স্টোরেজ। যদি `CHAR(10)` সেট করা থাকে এবং আপনি ৭ অক্ষরের স্ট্রিং রাখেন, তাহলে বাকিটা space দিয়ে প্যাড করা হয়। এটি ঐতিহ্যগতভাবে কিছু ক্ষেত্রে দ্রুততা দিতে পারে, তবে আজকাল নাজুক পারফরম্যান্স পার্থক্য দেখা যায় না এবং ফাঁকা স্পেস ট্রিমিংয়ে ঝামেলা করতে পারে।
+**৪) VARCHAR ও CHAR এর পার্থক্য**
 
-**VARCHAR(n)**: variable-length স্টোরেজ। `VARCHAR(100)` মানে সর্বোচ্চ 100 অক্ষর — কিন্তু বাস্তবে জায়গা শুধু ব্যবহারকৃত অক্ষরের জন্যই নেয়। অধিকাংশ আধুনিক ব্যবহারে `VARCHAR` লজিক্যাল কারণেই বেশি জনপ্রিয়।
+* **CHAR(n):** নির্দিষ্ট দৈর্ঘ্যের স্ট্রিং সংরক্ষণ করে। n এর চেয়ে ছোট হলে বাকিটা space দিয়ে পূরণ হয়।
+* **VARCHAR(n):** পরিবর্তনশীল দৈর্ঘ্যের স্ট্রিং সংরক্ষণ করে এবং যতটুকু দরকার ততটুকু জায়গা নেয়।
+  **উদাহরণ:**
 
-**সংক্ষিপ্ত সারণী:**
-- CHAR: fixed size, trailing spaces padded.
-- VARCHAR: variable size, বেশি লচিকতা এবং সাধারণত প্রেফার করা হয়।
+```sql
+CREATE TABLE demo (
+  code CHAR(5),
+  title VARCHAR(50)
+);
+```
 
+প্র্যাকটিক্যালি `VARCHAR` বেশি ব্যবহার হয় কারণ এটি জায়গা বাঁচায় ও লচিকতা দেয়।
+
+---
+
+**৫) SELECT স্টেটমেন্টে WHERE ক্লজের উদ্দেশ্য**
+`WHERE` ক্লজ শর্ত দিয়ে ডেটা ফিল্টার করতে ব্যবহৃত হয়, যাতে শুধুমাত্র প্রয়োজনীয় রেকর্ডগুলো পাওয়া যায়।
 **উদাহরণ:**
+
 ```sql
-CREATE TABLE demo_char_varchar (
-  a CHAR(10),
-  b VARCHAR(10)
-);
-
-INSERT INTO demo_char_varchar (a,b) VALUES ('Hi','Hi');
-
+SELECT * FROM employees
+WHERE salary > 50000 AND department_id = 2;
 ```
 
-**প্র্যাকটিক্যাল টিপস:** সাধারণত টেক্সটের জন্য `VARCHAR` ব্যবহার করুন; যদি প্রতিটি রেকর্ডে ঠিক সমান দৈর্ঘ্যের স্ট্রিং সংরক্ষণ করবেন (দ্রষ্টব্য: খুবই বিরল), তখন `CHAR` বিবেচনা করতে পারেন।
+এতে শুধু সেই কর্মচারীদের রেকর্ড আসবে যাদের বেতন ৫০,০০০ এর বেশি এবং বিভাগ ২ এ রয়েছে।
 
 ---
 
-### ৫) JOIN এর গুরুত্ব ও কাজ করার ধরন (PostgreSQL-এ)
-**JOIN** হলো সম্পর্কিত টেবিলগুলোকে যুক্ত করে একক কুয়েরিতে ডেটা আনতে ব্যবহারী কৌশল। বাস্তব জীবনের ডেটা সাধারণত নরমালাইজড থাকে — টেবিলগুলো আলাদা রাখা হয় এবং প্রয়োজনে JOIN করে মিলিয়ে ফলাফল নেওয়া হয়। JOIN না থাকলে ডুপ্লিকেট ডেটা অনেক হতে পারে।
+**৬) LIMIT ও OFFSET এর ব্যবহার**
+`LIMIT` দিয়ে কতোটি রেকর্ড ফেরত দিতে হবে নির্ধারণ হয় এবং `OFFSET` দিয়ে কোন নম্বর রো থেকে শুরু হবে তা নির্ধারণ হয়।
+**উদাহরণ:**
 
-**প্রধান JOIN প্রকারসমূহ:**
-- `INNER JOIN`: দুই টেবিলে মিল থাকা রেকর্ডই ফেরত দেয়।
-- `LEFT JOIN` (বা LEFT OUTER JOIN): বাম টেবিলের সব রেকর্ড ফেরত দেয়; যদি ডান টেবিলে মেলে না, তবে NULL ভ্যালু দেখায়।
-- `RIGHT JOIN`: ডান টেবিলের সব রেকর্ড ধরে রাখে; বাম টেবিলে না থাকলে NULL চলে আসে।
-- `FULL JOIN`: দুইদিকের সব রেকর্ড ধরে রাখে; মিল না হলে NULL-পুরণ করে দেয়।
-- `CROSS JOIN`: Cartesian product — সব কম্বিনেশন ফেরত দেয় (সচেতনভাবে ব্যবহার করতে হয়)।
-
-**উদাহরণ (rangers + sightings):**
 ```sql
-
-SELECT r.name, COUNT(s.sighting_id) AS total_sightings
-FROM rangers r
-LEFT JOIN sightings s ON s.ranger_id = r.ranger_id
-GROUP BY r.name;
+SELECT * FROM employees
+ORDER BY id
+LIMIT 10 OFFSET 20;
 ```
-**কেন JOIN দরকার?** কারণ `rangers` টেবিল শুধুমাত্র রেঞ্জারদের নাম ও রিজিয়ন রাখে, আর `sightings` সাইটিং সম্পর্কিত ডেটা রাখে। JOIN করে আপনি সহজেই জানতে পারবেন কোন রেঞ্জার কবে কোন প্রজাতির সাইটিং করেছে — অর্থাৎ রিলেশনাল তথ্য একত্রিত করা যায়।
+
+এতে ২১ নম্বর রেকর্ড থেকে পরবর্তী ১০টি রেকর্ড পাওয়া যাবে। এটি pagination এর জন্য খুব দরকারী।
+
+---
+
+**৭) UPDATE দিয়ে ডেটা পরিবর্তন**
+`UPDATE` স্টেটমেন্ট বিদ্যমান রেকর্ড পরিবর্তনের জন্য ব্যবহৃত হয়।
+**উদাহরণ:**
+
+```sql
+UPDATE employees
+SET salary = salary * 1.1
+WHERE performance_score > 90
+RETURNING id, salary;
+```
+
+এটি ৯০ এর বেশি স্কোর থাকা কর্মচারীদের বেতন ১০% বাড়াবে এবং পরিবর্তিত ডেটা দেখাবে।
+
+---
+
+**৮) JOIN এর গুরুত্ব ও কাজ**
+`JOIN` দিয়ে একাধিক টেবিল থেকে সম্পর্কযুক্ত ডেটা একসাথে আনা হয়।
+**উদাহরণ:**
+
+```sql
+SELECT e.name, d.name AS department
+FROM employees e
+JOIN departments d ON e.dept_id = d.dept_id;
+```
+
+এটি `employees` ও `departments` টেবিল যুক্ত করে কর্মচারী ও বিভাগের নাম একসাথে দেখায়।
+
+---
+
+**৯) GROUP BY ও অ্যাগ্রিগেশন**
+`GROUP BY` দিয়ে একই ধরনের মান থাকা রেকর্ডগুলো গ্রুপ করা হয়, যাতে প্রতিটি গ্রুপে aggregate ফাংশন প্রয়োগ করা যায়।
+**উদাহরণ:**
+
+```sql
+SELECT department_id, COUNT(*) AS total_emp
+FROM employees
+GROUP BY department_id
+HAVING COUNT(*) > 5;
+```
+
+এটি ৫ জনের বেশি কর্মচারী থাকা বিভাগগুলো দেখাবে।
+
+---
+
+**১০) COUNT(), SUM(), AVG() ব্যবহার**
+এগুলো aggregate ফাংশন যা ডেটার উপর গণনা করে।
+**উদাহরণ:**
+
+```sql
+SELECT COUNT(*) AS total_emp,
+       SUM(salary) AS total_salary,
+       AVG(salary) AS avg_salary
+FROM employees;
+```
+
+এতে কর্মচারীর সংখ্যা, মোট বেতন এবং গড় বেতন বের হবে।
 
 ---

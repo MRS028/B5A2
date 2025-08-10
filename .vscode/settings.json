@@ -1,0 +1,14 @@
+{
+  "sqltools.connections": [
+    {
+      "previewLimit": 50,
+      "server": "localhost",
+      "port": 5432,
+      "driver": "PostgreSQL",
+      "name": "PostgresDBMS",
+      "database": "conservation_db",
+      "password": "123456",
+      "username": "postgres"
+    }
+  ]
+}
